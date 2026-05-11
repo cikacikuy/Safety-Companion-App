@@ -25,12 +25,12 @@ export function EmergencyButton({ userName, userPhone }: EmergencyButtonProps) {
   ];
 
   const handleEmergencyCall = (serviceName: string, number: string) => {
-    // In a real app, this would trigger an actual call
     toast.success(`Calling ${serviceName}...`, {
       description: `Dialing ${number}`
     });
-    
-    // Simulate emergency notification
+
+    window.location.href = `tel:${number}`;
+
     setTimeout(() => {
       toast.info('Emergency contacts have been notified', {
         description: 'Your location has been shared'
@@ -148,10 +148,12 @@ export function EmergencyButton({ userName, userPhone }: EmergencyButtonProps) {
             <div className="p-8 bg-gradient-to-br from-red-50 to-red-100 rounded-3xl border-2 border-red-200">
               <Button
                 size="lg"
-                className="w-full h-40 text-3xl bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 rounded-2xl shadow-2xl"
+                className="w-full h-40 text-2xl sm:text-3xl bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 rounded-2xl shadow-2xl touch-none"
                 onMouseDown={startHoldSOS}
                 onMouseUp={stopHoldSOS}
                 onMouseLeave={stopHoldSOS}
+                onTouchStart={startHoldSOS}
+                onTouchEnd={stopHoldSOS}
               >
                 <div className="text-center">
                   <AlertCircle className="w-16 h-16 mx-auto mb-3" />
