@@ -35,13 +35,13 @@ export function FakeCall({ }: FakeCallProps) {
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
   const [incomingNumber, setIncomingNumber] = useState('');
-
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const ringtoneAudioContextRef = useRef<AudioContext | null>(null);
   const ringtoneIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const vibrateIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const generateFakePhoneNumber = () => {
     const prefixes = ['812', '813', '821', '822', '851', '878', '895'];
@@ -143,17 +143,22 @@ export function FakeCall({ }: FakeCallProps) {
       playRingtone();
       
       // Vibrate if supported
+      // Vibrate if supported
       if (navigator.vibrate) {
         const vibratePattern = [500, 200, 500, 200, 500];
-        const vibrateInterval = setInterval(() => {
-          if (navigator.vibrate) {
-            navigator.vibrate(vibratePattern);
-          }
+
+        vibrateIntervalRef.current = setInterval(() => {
+          navigator.vibrate(vibratePattern);
         }, 2000);
-        
-        // Stop vibrating after 30 seconds or when call is answered/declined
+
+        // Auto stop after 30 sec
         setTimeout(() => {
-          clearInterval(vibrateInterval);
+          if (vibrateIntervalRef.current) {
+            clearInterval(vibrateIntervalRef.current);
+            vibrateIntervalRef.current = null;
+          }
+
+          navigator.vibrate(0);
         }, 30000);
       }
     }, delayMs);
@@ -248,11 +253,23 @@ export function FakeCall({ }: FakeCallProps) {
     }
   };
 
+  const stopVibration = () => {
+    if (vibrateIntervalRef.current) {
+      clearInterval(vibrateIntervalRef.current);
+      vibrateIntervalRef.current = null;
+    }
+
+    if (navigator.vibrate) {
+      navigator.vibrate(0);
+    }
+  };
+
   const answerCall = () => {
     setIsRinging(false);
     setIsCallActive(true);
     setCallDuration(0);
     stopRingtone();
+    stopVibration();
     toast.success('Call connected');
     
     // Play voice after 2 seconds of "answering"
@@ -264,6 +281,7 @@ export function FakeCall({ }: FakeCallProps) {
   const declineCall = () => {
     setIsRinging(false);
     stopRingtone();
+    stopVibration();
     toast.info('Call declined');
   };
 
@@ -345,6 +363,8 @@ export function FakeCall({ }: FakeCallProps) {
 
   const endCall = () => {
     setIsCallActive(false);
+    stopRingtone();
+    stopVibration();
     // Stop any playing audio
     if (audioRef.current) {
       audioRef.current.pause();

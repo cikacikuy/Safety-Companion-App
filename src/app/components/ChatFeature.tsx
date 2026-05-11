@@ -403,7 +403,7 @@ export function ChatFeature({ userName, userPhone }: ChatFeatureProps) {
   }
 
   return (
-    <div className="flex flex-col h-[calc(85vh-120px)]">
+    <div className="flex flex-col h-[calc(100vh-120px)] sm:h-[calc(85vh-120px)]">
       {/* Contacts List or Chat View */}
       {!selectedContact ? (
         <div className="flex-1 overflow-y-auto">
@@ -559,7 +559,7 @@ export function ChatFeature({ userName, userPhone }: ChatFeatureProps) {
                     variant="outline"
                     size="sm"
                     className={`
-                      min-w-[180px]
+                      min-w-[140px] sm:min-w-[180px]
                       rounded-2xl
                       px-3
                       py-3
@@ -626,7 +626,7 @@ export function ChatFeature({ userName, userPhone }: ChatFeatureProps) {
           {/* Messages */}
             <div 
               ref={scrollRef}
-              className="flex-1 overflow-y-auto py-4 px-3 space-y-3 bg-gradient-to-b from-slate-50 via-white to-slate-100"
+              className="flex-1 overflow-y-auto py-3 px-2 sm:px-3 bg-gradient-to-b from-slate-50 via-white to-slate-100"
               style={{
                 backgroundImage: `
                   radial-gradient(circle at 1px 1px, rgba(0,0,0,0.03) 1px, transparent 0)
@@ -717,13 +717,14 @@ export function ChatFeature({ userName, userPhone }: ChatFeatureProps) {
                   ) : (
                     // Text Message
                     <div
-                      className={`max-w-[75%] rounded-2xl px-4 py-2 ${
+                      className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-3 py-2 sm:px-4 ${
                         message.sender === 'user'
-                          ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-tr-sm shadow-md'
-                          : 'bg-white border border-gray-200 text-gray-900 rounded-tl-sm'
+                          ? 'bg-[#d9fdd3] text-gray-900 rounded-tr-sm shadow-sm'
+                          : 'bg-white text-gray-900 rounded-tl-sm border border-gray-200 shadow-sm'
                       }`}
                     >
-                      <p className="text-sm">{message.content}</p>
+                      <p className="text-[14px] leading-relaxed break-words">
+                        {message.content}</p>
                       <div className={`flex items-center gap-1 mt-1 text-xs ${
                         message.sender === 'user' ? 'text-blue-100 justify-end' : 'text-gray-500'
                       }`}>
@@ -748,11 +749,11 @@ export function ChatFeature({ userName, userPhone }: ChatFeatureProps) {
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && sendMessage(inputMessage)}
                 placeholder="Type your message..."
-                className="flex-1 rounded-full border-2 h-12 px-5 shadow-sm"
+                className="flex-1 rounded-full border-2 h-11 sm:h-12 px-4 shadow-sm text-sm"
               />
               <Button
                 onClick={() => sendMessage(inputMessage)}
-                className="bg-blue-500 hover:bg-blue-600 rounded-full w-12 h-12 shadow-lg"
+                className="bg-blue-500 hover:bg-blue-600 rounded-full w-11 h-11 sm:w-12 sm:h-12 shadow-lg flex-shrink-0"
                 disabled={!inputMessage.trim()}
               >
                 <Send className="w-5 h-5" />
