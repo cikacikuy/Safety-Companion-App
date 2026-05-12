@@ -280,54 +280,33 @@ export function ChatFeature({ userName, userPhone }: ChatFeatureProps) {
     }
   };
 
-  const playVoiceMessage = (messageId: string, message: Message) => {
-    // Jika sedang diputar, hentikan
+  const playVoiceMessage = (
+    messageId: string,
+    audioUrl?: string
+  ) => {
+    if (!audioUrl) return;
+
     if (playingMessageId === messageId) {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-      window.speechSynthesis?.cancel();
+      audioRef.current?.pause();
       setPlayingMessageId(null);
       return;
     }
 
-    // Hentikan audio/TTS sebelumnya
     if (audioRef.current) {
       audioRef.current.pause();
-      audioRef.current = null;
     }
-    window.speechSynthesis?.cancel();
-    
+
+    const audio = new Audio(audioUrl);
+
+    audioRef.current = audio;
+
     setPlayingMessageId(messageId);
 
-    // Jika ada Audio URL (Voice Custom yang baru direkam di sesi ini)
-    if (message.audioUrl) {
-      const audio = new Audio(message.audioUrl);
-      audioRef.current = audio;
+    audio.play();
 
-      audio.onerror = () => {
-        // URL mati (karena refresh), fallback ke TTS
-        speakText(message.content);
-      };
-
-      audio.onended = () => {
-        setPlayingMessageId(null);
-        audioRef.current = null;
-      };
-
-      audio.play().catch(() => {
-        speakText(message.content); // Fallback jika browser block autoplay
-      });
-    } 
-    // Jika tidak ada Audio URL (Template TTS / Voice lama yang expired)
-    else {
-      speakText(message.content);
-      const estimatedDuration = message.content.length * 60;
-      setTimeout(() => {
-        setPlayingMessageId(null);
-      }, estimatedDuration);
-    }
+    audio.onended = () => {
+      setPlayingMessageId(null);
+    };
   };
 
   const simulateRecording = async () => {
@@ -423,9 +402,8 @@ export function ChatFeature({ userName, userPhone }: ChatFeatureProps) {
     );
   }
 
-    return (
-    /* ✅ FIX 1: TAMBAHKAN max-w-lg BIAR KAYAK HP DI DESKTOP, FULLSCREEN DI MOBILE */
-    <div className="w-full max-w-lg mx-auto flex flex-col h-[100dvh] sm:h-[calc(85vh-120px)] bg-white sm:rounded-2xl sm:border sm:shadow-2xl overflow-hidden relative">
+  return (
+    <div className="flex flex-col h-[calc(100vh-120px)] sm:h-[calc(85vh-120px)]">
       {/* Contacts List or Chat View */}
       {!selectedContact ? (
         <div className="flex-1 overflow-y-auto">
@@ -531,7 +509,7 @@ export function ChatFeature({ userName, userPhone }: ChatFeatureProps) {
           </div>
 
           {/* Quick Message Templates */}
-          <div className="hidden sm:block py-3 border-b">
+          <div className="py-3 border-b">
             <div className="flex items-center gap-2 mb-2">
               <Zap className="w-4 h-4 text-purple-600" />
               <h4 className="text-xs font-semibold text-gray-600">Quick Messages</h4>
@@ -567,7 +545,7 @@ export function ChatFeature({ userName, userPhone }: ChatFeatureProps) {
           </div>
 
           {/* Voice Message Templates */}
-          <div className="hidden sm:block py-3 border-b bg-gradient-to-r from-purple-50 to-pink-50">
+          <div className="py-3 border-b bg-gradient-to-r from-purple-50 to-pink-50">
             <div className="flex items-center gap-2 mb-2 px-3">
               <Volume2 className="w-4 h-4 text-purple-600" />
               <h4 className="text-xs font-semibold text-gray-600">Voice Templates</h4>
@@ -648,8 +626,13 @@ export function ChatFeature({ userName, userPhone }: ChatFeatureProps) {
           {/* Messages */}
             <div 
               ref={scrollRef}
-              className="flex-1 overflow-y-auto py-3 px-2 sm:px-3 bg-[#efeae2]"
-              style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23d4cfc5\' fill-opacity=\'0.4\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")' }}
+              className="flex-1 overflow-y-auto py-3 px-2 sm:px-3 bg-gradient-to-b from-slate-50 via-white to-slate-100"
+              style={{
+                backgroundImage: `
+                  radial-gradient(circle at 1px 1px, rgba(0,0,0,0.03) 1px, transparent 0)
+                `,
+                backgroundSize: '20px 20px'
+              }}
             >
             {messages.length === 0 ? (
               <div className="text-center py-8">
@@ -686,7 +669,7 @@ export function ChatFeature({ userName, userPhone }: ChatFeatureProps) {
                               : 'bg-purple-100 hover:bg-purple-200 text-purple-600 rounded-full'
                           }`}
                           onClick={() =>
-                            playVoiceMessage(message.id, message)
+                            playVoiceMessage(message.id, message.audioUrl)
                           }
                         >
                           {playingMessageId === message.id ? (
@@ -734,21 +717,21 @@ export function ChatFeature({ userName, userPhone }: ChatFeatureProps) {
                   ) : (
                     // Text Message
                     <div
-                      className={`max-w-[85%] rounded-xl px-3 py-2 shadow-sm ${
+                      className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-3 py-2 sm:px-4 ${
                         message.sender === 'user'
-                          ? 'bg-[#d9fdd3] text-gray-900'
-                          : 'bg-white text-gray-900'
+                          ? 'bg-[#d9fdd3] text-gray-900 rounded-tr-sm shadow-sm'
+                          : 'bg-white text-gray-900 rounded-tl-sm border border-gray-200 shadow-sm'
                       }`}
                     >
                       <p className="text-[14px] leading-relaxed break-words">
                         {message.content}</p>
-                      <div className={`flex items-center gap-1 mt-1 text-[10px] text-gray-500 ${
-                        message.sender === 'user' ? 'justify-end' : ''
+                      <div className={`flex items-center gap-1 mt-1 text-xs ${
+                        message.sender === 'user' ? 'text-blue-100 justify-end' : 'text-gray-500'
                       }`}>
                         <Clock className="w-3 h-3" />
                         <span>{formatTime(message.timestamp)}</span>
                         {message.sender === 'user' && (
-                          <CheckCheck className="w-3 h-3 text-blue-500" />
+                          <CheckCheck className="w-3 h-3 ml-1" />
                         )}
                       </div>
                     </div>
